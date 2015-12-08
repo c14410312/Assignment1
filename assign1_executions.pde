@@ -16,6 +16,7 @@ int avg;
 ArrayList<Execution> executions = new ArrayList<Execution>();
 ArrayList<ExecutionByRace> races = new ArrayList<ExecutionByRace>();
 ArrayList<ExecutionByState> states = new ArrayList<ExecutionByState>();
+ArrayList<MethodTotal> statesMethods = new ArrayList<MethodTotal>();
 ArrayList<Float> sumExcut = new ArrayList<Float>();
 
 
@@ -40,6 +41,8 @@ void setup()
   size(1200, 600);
   textSize(10);
   frame.setResizable(true);
+  
+  //used to give nice motion to scattergraph
   smooth();
   frameRate(60);
   
@@ -48,11 +51,12 @@ void setup()
   player = minim.loadFile("UNDERGROUND ( Dark Ambient Music ) creepy Horror music.mp3", 2048);
   player.play();
   
-  //call the load execution function
+  //call the load data functions
   loadExecutions();
   loadExecutPerYear();
   loadExecutionByRace();
   loadExecutionByState();
+  loadMethodTotal();
   loadBalls();
   
   //calcualte amount of buttons on screen three for scatter graph
@@ -64,7 +68,7 @@ void setup()
   noStroke();
   cp5 = new ControlP5(this);
       
-  // add a vertical slider
+  // add a vertical slider to bar chart
   cp5.addSlider("slider")
    .setPosition(80,10)
    .setSize(400,20)
@@ -77,6 +81,7 @@ void setup()
   cp5.getController("slider").getValueLabel().align(ControlP5.LEFT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0);
   cp5.getController("slider").getCaptionLabel().align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0);
 
+  //ScatterPlot graph button bar
   button = new ControlP5(this);
   for(int i = 0; i < states.size(); i++)
   {
@@ -88,13 +93,21 @@ void setup()
   }
   infoState = "";
 //*************************** 
+
+
 }
 
-//Control P5
+//Control P5 slider Barchart
 void slider(int value) {
   myValue = int(value);
 }
 
+//Control P5
+//displays info about state when state button clicked
+ void controlEvent(ControlEvent theEvent)
+{ 
+    infoState = theEvent.getController().getName();
+}
 
 
 
@@ -111,6 +124,7 @@ void draw()
       //Bar chart slider hidden from menu
       cp5.setVisible(false);
       fill(255);
+      //used to reset the balls in scatterplot graph so they reload for effect
       ballReturn = 1;
     }
     if (key == '1')
@@ -132,7 +146,9 @@ void draw()
     }
     if(key == '3')
     {
+      //hides slider
       cp5.setVisible(false);
+      //shows button bar
       button.setVisible(true);
       screen = 3;
       ballReturn = 0;
@@ -140,6 +156,7 @@ void draw()
     
     if(key == '4')
     {
+      //hide both buttons + slider
       cp5.setVisible(false);
       button.setVisible(false);
       screen = 4;
@@ -171,12 +188,14 @@ void draw()
   if(screen == 1)
   {
     frame.setSize(600, 600);
+    //call draw the trend line graph function using the races arrayList
     drawTrendLineGraph(races, "1608");
   }
   
   if(screen == 2)
   {
     frame.setSize(600, 600);
+    //Calls barchart function
     drawBarChart();
     
   }
@@ -185,7 +204,9 @@ void draw()
   {
     frame.setSize(1200, 700);
     textSize(18);
+    //calls the ball projection function to load and display balls in relative positions
     ballProjection();
+    //used to display box of info when clicked about state
     showStateInfo();
   }
   
@@ -206,15 +227,65 @@ void draw()
     textSize(15);
     avg = averageAge(executions.size());
     text("Average age of prisoners: " + avg  + " years old", 300, 200);
-}
- 
-
     
-}
-//displays info about state when state button clicked
- void controlEvent(ControlEvent theEvent)
-{ 
-    infoState = theEvent.getController().getName();
+    //Finds State with highest hangings
+    float max = 0;
+    String hangState = null;
+    
+    for(int i = 0 ; i < statesMethods.size();i++)
+    {
+      if(statesMethods.get(i).hanging > max)
+      {
+        max = statesMethods.get(i).hanging;
+        hangState = statesMethods.get(i).state;
+      }
+    }
+  text("Highest hangings: " + hangState + ":" + int(max) , 300, 250);
+  
+  //Finds State with highest Fireing squad
+    max = 0;
+    String shotState = null;
+    
+    for(int i = 0 ; i < statesMethods.size();i++)
+    {
+      if(statesMethods.get(i).shot > max)
+      {
+        max = statesMethods.get(i).shot;
+        shotState = statesMethods.get(i).state;
+      }
+    }
+  text("Highest Fireing Squad: " + shotState + ":" + int(max) , 300, 280);
+  
+  //Finds State with highest Injection rate
+    max = 0;
+    String injectState = null;
+    
+    for(int i = 0 ; i < statesMethods.size();i++)
+    {
+      if(statesMethods.get(i).injection > max)
+      {
+        max = statesMethods.get(i).injection;
+        injectState = statesMethods.get(i).state;
+      }
+    }
+  text("Highest Injections: " + injectState + ":" + int(max) , 300, 310);
+  
+  //Finds State with highest Injection rate
+    max = 0;
+    String electroState = null;
+    
+    for(int i = 0 ; i < statesMethods.size();i++)
+    {
+      if(statesMethods.get(i).electrocution > max)
+      {
+        max = statesMethods.get(i).electrocution;
+        electroState = statesMethods.get(i).state;
+      }
+    }
+  text("Highest Electrocutions: " + electroState + ":" + int(max) , 300, 340);
+  } 
+
+   
 }
 
 //finds the average age in the data set
@@ -235,41 +306,27 @@ int averageAge(float size)
     //7338 == number of cells that have an age
     avrg = int(sum/7338);
     return avrg;
-}
+}//end screen 4
 
+//--------------------------------------------------------------------------------------------------------
 
-//displays box displaying the state details using execution by state details
-void showStateInfo()
+//********************** Screen 0 Functions ***********************
+//function to load up the menu screen
+void menu()
 {
-  for(int i = 0 ; i < states.size();i++)
-  {
-    if(infoState == states.get(i).stateAbr)
-    {
-      rect(0,0,150,80);
-      fill(0);
-      textAlign(CENTER,CENTER);
-      textSize(18);
-      text(states.get(i).state, 70,40);
-      textSize(12);
-      text("Total Executions: " + int(states.get(i).total), 70,60);
-      println(infoState);
-      textSize(12);
-    }
-  }
+   textSize(18);
+   text("Capital Punishment Data\n USA:1608-2002",300,300);
+   
+   textSize(16);
+   text("Press 1: Line Graph",300,370);
+   text("Press 2: Bar Chart",300,390);
+   text("Press 3: Scatter Graph",300,410);
+   text("Press 4: Dataset Facts",300,430);
+   text("Press 0: Return to Menu",300,450);
 }
+//*****************************************************************
 
-//loads the executions main file
-void loadExecutions()
-{
-     String[] lines = loadStrings("executions.csv");
-    for (int i = 0 ; i < lines.length ; i ++)
-    {
-      Execution execution = new Execution(lines[i]);
-      executions.add(execution);
-    }
-        
-}
-
+//**********************Screen 1 functions ************************
 //This is what is displayed in the line graph amount of executions carried out in each given year
 void loadExecutPerYear()
 {
@@ -281,184 +338,6 @@ void loadExecutPerYear()
   }
   
 }
-
-void loadExecutionByRace()
-{
-    String[] lines = loadStrings("executions_by_race.csv");
-    for (int i = 0 ; i < lines.length ; i ++)
-    {
-      ExecutionByRace raceYear = new ExecutionByRace(lines[i]);
-      races.add(raceYear);
-      
-      //adds each race total to give overall total for that year.
-      yearTotals[i] = races.get(i).white + races.get(i).black + races.get(i).hispanic + races.get(i).nativeAmer;
-      
-    }
-        
-}
-
-void loadBalls()
-{
-  for (int i = 0; i < numBalls; i++) {
-    //divide the diameter by 5 in order to get a good ratio to fit screen
-    balls[i] = new Ball(0, 0, states.get(i).total/5, i, random(250), states.get(i).stateAbr, states.get(i).state);
-  }
-}
-
-void loadExecutionByState()
-{
-    String[] lines = loadStrings("totalStateExecutions.csv");
-    for (int i = 0 ; i < lines.length ; i ++)
-    {
-      ExecutionByState state = new ExecutionByState(lines[i]);
-      states.add(state);
-    }
-        
-}
-
-//displays the balls represented by each state
-//balls size represents the amount of executions that took place in that state
-void ballProjection()
-{
-  //used to reload the balls when user returns to screen 3
-  if(ballReturn == 0)
-    {
-      loadBalls();
-    } 
-    
-    // get min/max values for each sort axis and store in array
-    float[] minMaxX = new float[2];
-    float[] minMaxY = new float[2];
-   
-    //Sorts balls in relation to there diameter smallest to largest based on the x-axis
-    minMaxX = getMinMax("diameter", balls.length);
-    
-    //sorts hue of color from smallest to largest in relation to y axis i.e keep all similar color in one row
-    minMaxY = getMinMax("hue", balls.length);
-  
-    //iterate through each ball in order to plot
-    for (int i = 0; i < balls.length; i++) {
-      
-      //displays balls moving at a smooth rate across to their final destination on the x and y axis
-      balls[i].display();
-      
-      //pushes balls from the left of the screen
-      float offsetX = border;
-      float offsetY = border;
-      
-      //plots balls within a fixed area
-      float plotW = width - border*4;
-      float plotH = height - border*4;
-      
-      
-      float valX = balls[i].diameter;
-      float valY = balls[i].hue;
-      
-       // map values to x and y axis
-      float posX = map(valX , minMaxX[0], minMaxX[1], offsetX*2, offsetX + plotW);
-      float posY = map(valY , minMaxY[0], minMaxY[1], offsetY * 2, offsetY + plotH);
-      
-      // check if photo is visible
-      balls[i].position(posX, posY);
-    }
-    ballReturn = 1;
-}
-
-//used to sort each of the values in the ball array from min to max 
-float[] getMinMax(String sortField, int count) {
-   
-  // create temporary array to hold sort values
-  float tempArray[] = new float[count];
-   
-  // populate temporary array with sort values
-  for (int i = 0; i < balls.length; i++) {
-    if (sortField == "diameter") { // only add to array if photo is visible
-      tempArray[i] = balls[i].diameter;
-    } else if (sortField == "hue") {
-      tempArray[i] = balls[i].hue;
-    }
-    
-  }
-   
-  // store minumum and maximum values in array. minMax[0] store minimum; minMax[1] stores maximum
-  float[] minMax = new float[2];
-   
-  minMax[0] = MAX_FLOAT; // MAX_FLOAT is the highest possible float number
-  minMax[1] = MIN_FLOAT; // MIN_FLOAT is the lowest possible float number
- 
-  for (int i = 0; i < tempArray.length; i++) {
-     if (tempArray[i] < minMax[0]) { // get minimum
-       minMax[0] = tempArray[i];
-     }
-     if (tempArray[i] > minMax[1]) { // get maximum
-       minMax[1] = tempArray[i];
-     }
-     
-  }
-   
-  return minMax;
-}
-
-
-//draws bar chart for particular year
-//years technically measured from 0 -> 394 i.e 1608 -> 2002
-void drawBarChart()
-{
-  float border = width*0.1f;
-  // Print the text 
-   textAlign(CENTER, CENTER);   
-   float textY = (50); 
-   textSize(15);
-   text("Executions By Race for year: "+ (myValue+1608), width * 0.5f, textY);
- 
-   drawBarAxis();  
-  float barWidth = (width-(border*2)) / 4;
-  
-  //White Bar
-  fill(255);
-  stroke(255);
-  float x = 0 * barWidth + border;
-  rect(x, height-border, barWidth, - map(int(races.get(myValue).white),0,150,0,height));
-  text("White",x + (width/8), height - (border*0.5));
-  text(int(races.get(myValue).white), x + (width/8), height - (border*0.8));
-
-  //Black Bar  
-  fill(50);
-  stroke(50);
-  float x1 = 1 * barWidth  + border;
-  rect(x1, height-border, barWidth, - map(int(races.get(myValue).black),0,150,0,height));
-  fill(255);
-  text("Black",x1 + (width/8), height - (border*0.5));
-  text(int(races.get(myValue).black), x1 + (width/8), height - (border*0.8));
-  
-  //Hispanic Bar
-  fill(130);
-  stroke(130);
-  float x2 = 2 * barWidth  + border;
-  rect(x2, height-border, barWidth, - map(int(races.get(myValue).hispanic),0,150,0,height));
-  fill(255);
-  text("Hispanic",x2 + (width/8), height - (border*0.5));
-  text(int(races.get(myValue).hispanic), x2 + (width/8), height - (border*0.8));
-  
-  //Native American Bar
-  fill(190);
-  stroke(190);
-  float x3 = 3 * barWidth  + border;
-  rect(x3, height-border, barWidth, - map(int(races.get(myValue).nativeAmer),0,150,0,height));
-  fill(255);
-  text("Native Amer.",x3 + (width/8), height - (border*0.5));
-  text(int(races.get(myValue).nativeAmer), x3 + (width/8), height - (border*0.8));
-}
-
-void drawBarAxis()
-{
-  float border = width*0.1f;
-  line(border, height - border, width - border, height - border);
-  
-  // Draw the vertical axis
-  line(border, border , border, height - border);
-}
-
 
 //Draw the Vertical and Horizontal axis Line Graph 
 void drawAxis(ArrayList<Execution> executions, int horizIntervals, int verticalIntervals, float vertDataRange, float border)
@@ -563,21 +442,239 @@ void drawTrendLineGraph(ArrayList<ExecutionByRace> data, String title)
   }   
 }
 
+//*****************************************************************
 
+//-----------------------------------------------------------------
 
-//function to load up the menu screen
-void menu()
+//**********************  Screen 2 Functions **********************
+void loadExecutionByRace()
 {
-   textSize(18);
-   text("Capital Punishment Data\n USA:1608-2002",300,300);
-   
-   textSize(16);
-   text("Press 1: Line Graph",300,370);
-   text("Press 2: Bar Chart",300,390);
-   text("Press 3: Scatter Graph",300,410);
-   text("Press 4: Dataset Facts",300,430);
-   text("Press 0: Return to Menu",300,450);
+    String[] lines = loadStrings("executions_by_race.csv");
+    for (int i = 0 ; i < lines.length ; i ++)
+    {
+      ExecutionByRace raceYear = new ExecutionByRace(lines[i]);
+      races.add(raceYear);
+      
+      //adds each race total to give overall total for that year.
+      yearTotals[i] = races.get(i).white + races.get(i).black + races.get(i).hispanic + races.get(i).nativeAmer;
+      
+    }
+        
 }
+
+//draws bar chart for particular year
+//years technically measured from 0 -> 394 i.e 1608 -> 2002
+void drawBarChart()
+{
+  float border = width*0.1f;
+  // Print the text 
+   textAlign(CENTER, CENTER);   
+   float textY = (50); 
+   textSize(15);
+   text("Executions By Race for year: "+ (myValue+1608), width * 0.5f, textY);
+ 
+   drawBarAxis();  
+  float barWidth = (width-(border*2)) / 4;
+  
+  //White Bar
+  fill(255);
+  stroke(255);
+  float x = 0 * barWidth + border;
+  rect(x, height-border, barWidth, - map(int(races.get(myValue).white),0,150,0,height));
+  text("White",x + (width/8), height - (border*0.5));
+  text(int(races.get(myValue).white), x + (width/8), height - (border*0.8));
+
+  //Black Bar  
+  fill(50);
+  stroke(50);
+  float x1 = 1 * barWidth  + border;
+  rect(x1, height-border, barWidth, - map(int(races.get(myValue).black),0,150,0,height));
+  fill(255);
+  text("Black",x1 + (width/8), height - (border*0.5));
+  text(int(races.get(myValue).black), x1 + (width/8), height - (border*0.8));
+  
+  //Hispanic Bar
+  fill(130);
+  stroke(130);
+  float x2 = 2 * barWidth  + border;
+  rect(x2, height-border, barWidth, - map(int(races.get(myValue).hispanic),0,150,0,height));
+  fill(255);
+  text("Hispanic",x2 + (width/8), height - (border*0.5));
+  text(int(races.get(myValue).hispanic), x2 + (width/8), height - (border*0.8));
+  
+  //Native American Bar
+  fill(190);
+  stroke(190);
+  float x3 = 3 * barWidth  + border;
+  rect(x3, height-border, barWidth, - map(int(races.get(myValue).nativeAmer),0,150,0,height));
+  fill(255);
+  text("Native Amer.",x3 + (width/8), height - (border*0.5));
+  text(int(races.get(myValue).nativeAmer), x3 + (width/8), height - (border*0.8));
+}
+
+void drawBarAxis()
+{
+  float border = width*0.1f;
+  line(border, height - border, width - border, height - border);
+  
+  // Draw the vertical axis
+  line(border, border , border, height - border);
+}
+
+//*****************************************************************
+
+//-------------------------------------------------------------------
+
+//************************* Screen 3 Functions ********************
+
+void loadBalls()
+{
+  for (int i = 0; i < numBalls; i++) {
+    //divide the diameter by 5 in order to get a good ratio to fit screen
+    balls[i] = new Ball(0, 0, states.get(i).total/5, i, random(250), states.get(i).stateAbr, states.get(i).state);
+  }
+}
+
+void loadExecutionByState()
+{
+    String[] lines = loadStrings("totalStateExecutions.csv");
+    for (int i = 0 ; i < lines.length ; i ++)
+    {
+      ExecutionByState state = new ExecutionByState(lines[i]);
+      states.add(state);
+    }
+        
+}
+
+//displays box displaying the state details using execution by state details
+void showStateInfo()
+{
+  for(int i = 0 ; i < states.size();i++)
+  {
+    if(infoState == states.get(i).stateAbr)
+    {
+      rect(0,0,150,80);
+      fill(0);
+      textAlign(CENTER,CENTER);
+      textSize(18);
+      text(states.get(i).state, 70,40);
+      textSize(12);
+      text("Total Executions: " + int(states.get(i).total), 70,60);
+      println(infoState);
+      textSize(12);
+    }
+  }
+}
+
+//displays the balls represented by each state
+//balls size represents the amount of executions that took place in that state
+void ballProjection()
+{
+  //used to reload the balls when user returns to screen 3
+  if(ballReturn == 0)
+    {
+      loadBalls();
+    } 
+    
+    // get min/max values for each sort axis and store in array
+    float[] minMaxX = new float[2];
+    float[] minMaxY = new float[2];
+   
+    //Sorts balls in relation to there diameter smallest to largest based on the x-axis
+    minMaxX = getMinMax("diameter", balls.length);
+    
+    //sorts hue of color from smallest to largest in relation to y axis i.e keep all similar color in one row
+    minMaxY = getMinMax("hue", balls.length);
+  
+    //iterate through each ball in order to plot
+    for (int i = 0; i < balls.length; i++) {
+      
+      //displays balls moving at a smooth rate across to their final destination on the x and y axis
+      balls[i].display();
+      
+      //pushes balls from the left of the screen
+      float offsetX = border;
+      float offsetY = border;
+      
+      //plots balls within a fixed area
+      float plotW = width - border*4;
+      float plotH = height - border*4;
+      
+      
+      float valX = balls[i].diameter;
+      float valY = balls[i].hue;
+      
+       // map values to x and y axis
+      float posX = map(valX , minMaxX[0], minMaxX[1], offsetX*2, offsetX + plotW);
+      float posY = map(valY , minMaxY[0], minMaxY[1], offsetY * 2, offsetY + plotH);
+      
+      // check if photo is visible
+      balls[i].position(posX, posY);
+    }
+    ballReturn = 1;
+}
+
+//used to sort each of the values in the ball array from min to max 
+float[] getMinMax(String sortField, int count) {
+   
+  // create temporary array to hold sort values
+  float tempArray[] = new float[count];
+   
+  // populate temporary array with sort values
+  for (int i = 0; i < balls.length; i++) {
+    if (sortField == "diameter") { // only add to array if photo is visible
+      tempArray[i] = balls[i].diameter;
+    } else if (sortField == "hue") {
+      tempArray[i] = balls[i].hue;
+    }
+    
+  }
+   
+  // store minumum and maximum values in array. minMax[0] store minimum; minMax[1] stores maximum
+  float[] minMax = new float[2];
+   
+  minMax[0] = MAX_FLOAT; // MAX_FLOAT is the highest possible float number
+  minMax[1] = MIN_FLOAT; // MIN_FLOAT is the lowest possible float number
+ 
+  for (int i = 0; i < tempArray.length; i++) {
+     if (tempArray[i] < minMax[0]) { // get minimum
+       minMax[0] = tempArray[i];
+     }
+     if (tempArray[i] > minMax[1]) { // get maximum
+       minMax[1] = tempArray[i];
+     }
+     
+  }
+   
+  return minMax;
+}
+
+//*****************************************************************
+//********************* Screen 4 functions **********************
+void loadMethodTotal()
+{
+   String[] lines = loadStrings("methodsState.csv");
+    for (int i = 0 ; i < lines.length ; i ++)
+    {
+      MethodTotal stateMethods = new MethodTotal(lines[i]);
+      statesMethods.add(stateMethods);
+    } 
+}
+
+//loads the executions main file
+void loadExecutions()
+{
+     String[] lines = loadStrings("executions.csv");
+    for (int i = 0 ; i < lines.length ; i ++)
+    {
+      Execution execution = new Execution(lines[i]);
+      executions.add(execution);
+    }
+        
+}
+//***************************************************************
+
+
 
 
 
