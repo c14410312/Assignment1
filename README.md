@@ -14,6 +14,7 @@ There are a few things that I have investigated in this file.
 #Line Graph:
 This displays 4 lines of different colours. It displays the amount of a particular race executed over 400 years.  
 It allows the user to see any mass increases or compare quantities of each race.
+![alt tag]("assign1_executions\LineGraph.png")
 
 #Dynamic Bar Chart:
 This uses controlP5 to implement a user friendly "slider". The user can use the slider to change the current values based on the year on display.
